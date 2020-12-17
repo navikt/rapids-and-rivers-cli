@@ -22,7 +22,7 @@ class JsonRiver(rapids: RapidsCliApplication) : MessageListener {
     }
 
     fun register(listener: JsonMessageListener) {
-        onSuccess(listener)
+        onMessage(listener)
         onError(listener)
     }
 
@@ -30,7 +30,7 @@ class JsonRiver(rapids: RapidsCliApplication) : MessageListener {
         validations.add(validation)
     }
 
-    fun onSuccess(listener: JsonValidationSuccessListener) {
+    fun onMessage(listener: JsonValidationSuccessListener) {
         listeners.add(listener)
     }
 
@@ -53,23 +53,34 @@ class JsonRiver(rapids: RapidsCliApplication) : MessageListener {
 
     override fun onMessage(record: ConsumerRecord<String, String>) {
         val node = parseJson(record.value()) ?: return
-        if (validations.any { !it.validate(record, node) }) return onError(record, node)
+        val errors = mutableListOf<String>()
+        if (hasErrors(record, node, errors)) return onError(record, node, errors)
         listeners.onEach { it.onMessage(record, node) }
+    }
+
+    private fun hasErrors(record: ConsumerRecord<String, String>, node: JsonNode, errors: MutableList<String>): Boolean {
+        return validations.filterNot {
+            val reasons = mutableListOf<String>()
+            it.validate(record, node, reasons).also {
+                if (reasons.isEmpty()) errors.add("Unknown reason")
+                else errors.addAll(reasons)
+            }
+        }.isNotEmpty()
     }
 
     private fun parseJson(message: String) =
         try { mapper.readTree(message) } catch (err: JsonProcessingException) { /* ignore invalid json */ null }
 
-    private fun onError(record: ConsumerRecord<String, String>, node: JsonNode) {
-        errorListeners.forEach { it.onError(record, node) }
+    private fun onError(record: ConsumerRecord<String, String>, node: JsonNode, reasons: List<String>) {
+        errorListeners.forEach { it.onError(record, node, reasons) }
     }
 
     fun interface JsonValidation {
-        fun validate(record: ConsumerRecord<String, String>, node: JsonNode): Boolean
+        fun validate(record: ConsumerRecord<String, String>, node: JsonNode, reasons: MutableList<String>): Boolean
     }
 
     fun interface JsonValidationErrorListener {
-        fun onError(record: ConsumerRecord<String, String>, node: JsonNode)
+        fun onError(record: ConsumerRecord<String, String>, node: JsonNode, reasons: List<String>)
     }
 
     fun interface JsonValidationSuccessListener {
