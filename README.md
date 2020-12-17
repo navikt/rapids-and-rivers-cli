@@ -21,7 +21,12 @@ fun main() {
         // parses every message as json
         JsonRiver(this).apply {
             // listens only on json messages
-            register(observeEvents("my_cool_event", "my_other_event"))
+            val typer = listOf("my_cool_event", "my_other_event")
+            validate { _, node -> node.hasNonNull("@event_name") }
+            validate { _, node -> node.path("@event_name").isTextual }
+            validate { _, node -> node.path("@event_name").asText() !in typer }
+            onSuccess { _, node -> println(node.toString()) }
+            onError { _, _ -> /*println("Message did not pass validation!")*/ }
         }
         // listens on every "raw" string message
         register(printStatistics())
@@ -30,17 +35,6 @@ fun main() {
         topics.onEach { topic -> consumer.seekTo(topic, LocalDateTime.now().minusHours(1)) }
     }
 }
-
-// print matching events to stdout
-private fun observeEvents(vararg type: String) =
-    type.toList().let { typer ->
-        fun (_: ConsumerRecord<String, String>, node: JsonNode) {
-            if (!node.hasNonNull("@event_name")) return
-            if (!node.path("@event_name").isTextual) return
-            if (node.path("@event_name").asText() !in typer) return
-            println(node.toString())
-        }
-    }
 
 // print a message count for each partition on every message
 private fun printStatistics(): (ConsumerRecord<String, String>) -> Unit {
