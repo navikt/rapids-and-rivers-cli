@@ -1,5 +1,8 @@
 # Rapids and rivers CLI
 
+Hvor mange biblioteker kan man lage for å konsumere fra Kafka, 'a?
+- `n + 1`
+
 ## Eksempel-app
 
 ```kotlin
