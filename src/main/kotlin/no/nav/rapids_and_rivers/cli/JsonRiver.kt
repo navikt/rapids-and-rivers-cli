@@ -9,7 +9,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
 class JsonRiver(rapids: RapidsCliApplication) : MessageListener {
-    private val listeners = mutableListOf<JsonMessageListener>()
+    private val listeners = mutableListOf<JsonValidationSuccessListener>()
+    private val errorListeners = mutableListOf<JsonValidationErrorListener>()
+    private val validations = mutableListOf<JsonValidation>()
     private val mapper = jacksonObjectMapper()
         .registerModule(JavaTimeModule())
         .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -20,22 +22,55 @@ class JsonRiver(rapids: RapidsCliApplication) : MessageListener {
     }
 
     fun register(listener: JsonMessageListener) {
+        onSuccess(listener)
+        onError(listener)
+    }
+
+    fun onSuccess(listener: JsonValidationSuccessListener) {
         listeners.add(listener)
     }
 
+    fun onError(listener: JsonValidationErrorListener) {
+        errorListeners.add(listener)
+    }
+
     fun unregister(listener: JsonMessageListener) {
+        unregister(listener as JsonValidationSuccessListener)
+        unregister(listener as JsonValidationErrorListener)
+    }
+
+    fun unregister(listener: JsonValidationSuccessListener) {
         listeners.remove(listener)
+    }
+
+    fun unregister(listener: JsonValidationErrorListener) {
+        errorListeners.remove(listener)
     }
 
     override fun onMessage(record: ConsumerRecord<String, String>) {
         val node = parseJson(record.value()) ?: return
+        if (validations.any { !it.validate(record, node) }) return onError(record, node)
         listeners.onEach { it.onMessage(record, node) }
     }
 
     private fun parseJson(message: String) =
         try { mapper.readTree(message) } catch (err: JsonProcessingException) { /* ignore invalid json */ null }
 
-    fun interface JsonMessageListener {
+    private fun onError(record: ConsumerRecord<String, String>, node: JsonNode) {
+        errorListeners.forEach { it.onError(record, node) }
+    }
+
+    fun interface JsonValidation {
+        fun validate(record: ConsumerRecord<String, String>, node: JsonNode): Boolean
+    }
+
+    fun interface JsonValidationErrorListener {
+        fun onError(record: ConsumerRecord<String, String>, node: JsonNode)
+    }
+
+    fun interface JsonValidationSuccessListener {
         fun onMessage(record: ConsumerRecord<String, String>, node: JsonNode)
     }
+
+    interface JsonMessageListener : JsonValidationErrorListener, JsonValidationSuccessListener
 }
