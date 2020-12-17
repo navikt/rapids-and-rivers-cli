@@ -17,6 +17,7 @@ private val config = Config(
 
 fun main() {
     val topics = listOf("my-cool-topic")
+    val producer = config.createProducer()
     RapidsCliApplication(config).apply {
         // parses every message as json
         JsonRiver(this).apply {
@@ -26,7 +27,9 @@ fun main() {
             validate { _, node -> node.path("@event_name").isTextual }
             validate { _, node -> node.path("@event_name").asText() !in typer }
             onSuccess { _, node -> println(node.toString()) }
-            onError { _, _ -> /*println("Message did not pass validation!")*/ }
+            onError { record, _ ->
+                producer.send(ProducerRecord("dead-letter-queue", record.key(), record.value()))
+            }
         }
         // listens on every "raw" string message
         register(printStatistics())
