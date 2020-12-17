@@ -11,8 +11,8 @@ private val config = Config(
     brokers = listOf("broker.url"),
     username = "username",
     password = "pw",
-    truststorePath = "/path/to/truststore",
-    truststorePw = "trustorepw"
+    truststorePath = System.getenv("NAV_TRUSTSTORE_PATH"),
+    truststorePw = System.getenv("NAV_TRUSTSTORE_PASSWORD")
 )
 
 fun main() {
