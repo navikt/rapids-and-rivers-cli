@@ -23,11 +23,12 @@ fun main() {
         JsonRiver(this).apply {
             // listens only on json messages
             val typer = listOf("my_cool_event", "my_other_event")
-            validate { _, node -> node.hasNonNull("@event_name") }
-            validate { _, node -> node.path("@event_name").isTextual }
-            validate { _, node -> node.path("@event_name").asText() !in typer }
-            onSuccess { _, node -> println(node.toString()) }
-            onError { record, _ ->
+            validate { _, node, reasons -> node.hasNonNull("@event_name").ifFailed(reasons, "Mangler @event_name") }
+            validate { _, node, reasons -> node.path("@event_name").isTextual.ifFailed(reasons, "@event_name er ikke tekstlig") }
+            validate { _, node, reasons -> (node.path("@event_name").asText() !in typer).ifFailed(reasons, "${node.path("@event_name").asText()} er ikke forventet type") }
+            onMessage { _, node -> println(node.toString()) }
+            onError { record, _, reasons ->
+                println("Failed to validate because:\n${reasons.joinToString()}")
                 producer.send(ProducerRecord("dead-letter-queue", record.key(), record.value()))
             }
         }
@@ -38,6 +39,9 @@ fun main() {
         topics.onEach { topic -> consumer.seekTo(topic, LocalDateTime.now().minusHours(1)) }
     }
 }
+
+private fun MutableList<String>.failed(why: String) = false.also { this.add(why) }
+private fun Boolean.ifFailed(reasons: MutableList<String>, why: String) = if (this) true else reasons.failed(why)
 
 // print a message count for each partition on every message
 private fun printStatistics(): (ConsumerRecord<String, String>) -> Unit {
