@@ -26,6 +26,10 @@ class JsonRiver(rapids: RapidsCliApplication) : MessageListener {
         onError(listener)
     }
 
+    fun validate(validation: JsonValidation) {
+        validations.add(validation)
+    }
+
     fun onSuccess(listener: JsonValidationSuccessListener) {
         listeners.add(listener)
     }
