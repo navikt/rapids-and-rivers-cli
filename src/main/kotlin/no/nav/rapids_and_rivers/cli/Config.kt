@@ -27,18 +27,19 @@ class Config(
             })
         }
 
-    internal fun createProducer() =
-        KafkaProducer(producerConfig(), StringSerializer(), StringSerializer()).also {
+    fun createProducer(properties: Properties = Properties()) =
+        KafkaProducer(producerConfig(properties), StringSerializer(), StringSerializer()).also {
             Runtime.getRuntime().addShutdownHook(Thread {
                 it.close()
             })
         }
 
-    private fun producerConfig() = Properties().apply {
+    private fun producerConfig(properties: Properties) = Properties().apply {
         putAll(kafkaBaseConfig())
         put(ProducerConfig.ACKS_CONFIG, "1")
         put(ProducerConfig.LINGER_MS_CONFIG, "0")
         put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1")
+        putAll(properties)
     }
 
     private fun consumerConfig(groupId: String, properties: Properties) = Properties().apply {
