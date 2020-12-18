@@ -7,13 +7,7 @@ Hvor mange biblioteker kan man lage for å konsumere fra Kafka, 'a?
 
 ```kotlin
 
-private val config = Config(
-    brokers = listOf("broker.url"),
-    username = "username",
-    password = "pw",
-    truststorePath = System.getenv("NAV_TRUSTSTORE_PATH"),
-    truststorePw = System.getenv("NAV_TRUSTSTORE_PASSWORD")
-)
+private val config = Config.default
 
 fun main() {
     val topics = listOf("my-cool-topic")

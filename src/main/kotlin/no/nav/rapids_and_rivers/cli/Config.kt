@@ -10,6 +10,7 @@ import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import java.io.File
+import java.io.FileNotFoundException
 import java.util.*
 
 class Config(
@@ -19,6 +20,24 @@ class Config(
     private val truststorePath: String,
     private val truststorePw: String
 ) {
+    companion object {
+        val default get() = Config(
+            brokers = requireNotNull(System.getenv("KAFKA_BOOTSTRAP_SERVERS")) { "Expected KAFKA_BOOTSTRAP_SERVERS" }.split(',').map(String::trim),
+            username = "/var/run/secrets/nais.io/service_user/username".readFile(),
+            password = "/var/run/secrets/nais.io/service_user/password".readFile(),
+            truststorePath = requireNotNull(System.getenv("NAV_TRUSTSTORE_PATH")) { "Expected NAV_TRUSTSTORE_PATH" },
+            truststorePw = requireNotNull(System.getenv("NAV_TRUSTSTORE_PASSWORD")) { "Expected NAV_TRUSTSTORE_PASSWORD" }
+        )
+
+        private fun String.readFile() =
+            File(this).readText(Charsets.UTF_8)
+    }
+
+    init {
+        check(brokers.isNotEmpty())
+        check(username.isNotBlank())
+        check(password.isNotBlank())
+    }
 
     internal fun createConsumer(groupId: String, properties: Properties = Properties()) =
         KafkaConsumer(consumerConfig(groupId, properties), StringDeserializer(), StringDeserializer()).also {
