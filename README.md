@@ -7,7 +7,7 @@ Hvor mange biblioteker kan man lage for å konsumere fra Kafka, 'a?
 
 ```kotlin
 
-private val config = OnPremConfig.default
+private val config = OnPremConfig.default // AivenConfig.default
 private val factory = ConsumerProducerFactory(config)
 
 fun main() {
