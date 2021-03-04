@@ -7,12 +7,13 @@ Hvor mange biblioteker kan man lage for å konsumere fra Kafka, 'a?
 
 ```kotlin
 
-private val config = Config.default
+private val config = OnPremConfig.default
+private val factory = ConsumerProducerFactory(config)
 
 fun main() {
     val topics = listOf("my-cool-topic")
-    val producer = config.createProducer()
-    RapidsCliApplication(config).apply {
+    val producer = factory.createProducer()
+    RapidsCliApplication(factory).apply {
         // parses every message as json
         JsonRiver(this).apply {
             // listens only on json messages
