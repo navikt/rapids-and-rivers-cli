@@ -12,7 +12,10 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-class RapidsCliApplication(private val config: Config) {
+class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
+
+    constructor(config: Config) : this(ConsumerProducerFactory(config))
+
     private val log = LoggerFactory.getLogger(this::class.java)
     private val listeners = mutableListOf<MessageListener>()
     private val shutdown = CountDownLatch(1)
@@ -48,7 +51,7 @@ class RapidsCliApplication(private val config: Config) {
     fun start(groupId: String, topics: List<String>, properties: Properties = Properties(), configure: (KafkaConsumer<String, String>) -> Unit = {}) {
         if (running.getAndSet(true)) throw IllegalStateException("Already running")
         val props = Properties(defaultConsumerProperties).apply { putAll(properties) }
-        consumer = config.createConsumer(groupId, props).apply {
+        consumer = factory.createConsumer(groupId, props).apply {
             use { consumer ->
                 configure(consumer)
                 consumer.subscribe(topics)
