@@ -1,7 +1,9 @@
 package no.nav.rapids_and_rivers.cli
 
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
 import java.lang.Exception
@@ -20,6 +22,10 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
     private val listeners = mutableListOf<MessageListener>()
     private val shutdown = CountDownLatch(1)
     private val running = AtomicBoolean(false)
+
+    private var partitionsAssignedFirstTime: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit = { _, _ -> }
+    private var partitionsAssigned: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit = { _, _ -> }
+    private var partitionsRevoked: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit = { _, _ -> }
 
     private val defaultConsumerProperties = Properties().apply {
         this[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
@@ -48,13 +54,25 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
         shutdown.await(10, TimeUnit.SECONDS)
     }
 
+    fun partitionsAssignedFirstTime(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit) {
+        partitionsAssignedFirstTime = callback
+    }
+
+    fun partitionsAssigned(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit) {
+        partitionsAssigned = callback
+    }
+
+    fun partitionsARevoked(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit) {
+        partitionsRevoked = callback
+    }
+
     fun start(groupId: String, topics: List<String>, properties: Properties = Properties(), configure: (KafkaConsumer<String, String>) -> Unit = {}) {
         if (running.getAndSet(true)) throw IllegalStateException("Already running")
         val props = Properties(defaultConsumerProperties).apply { putAll(properties) }
         consumer = factory.createConsumer(groupId, props).apply {
             use { consumer ->
                 configure(consumer)
-                consumer.subscribe(topics)
+                consumer.subscribe(topics, RebalanceListener(consumer, partitionsAssignedFirstTime, partitionsAssigned, partitionsRevoked))
                 try {
                     while (running.get())
                         consumer.poll(Duration.ofSeconds(1)).forEach { record ->
@@ -74,5 +92,24 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
     private fun tryAndLog(message: String, block: () -> Unit) {
         try { block() }
         catch (err: Exception) { log.warn(message, err)}
+    }
+
+    private inner class RebalanceListener(
+        private val consumer: KafkaConsumer<String, String>,
+        private val partitionsAssignedFirstTime: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit,
+        private val assignCallback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit,
+        private val revokeCallback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit
+    ) : ConsumerRebalanceListener {
+        private val partitionsSeenBefore = mutableSetOf<TopicPartition>()
+
+        override fun onPartitionsAssigned(partitions: Collection<TopicPartition>) {
+            val new = partitions.filter { partitionsSeenBefore.add(it) }
+            if (new.isNotEmpty()) partitionsAssignedFirstTime(consumer, new)
+            assignCallback(consumer, partitions)
+        }
+
+        override fun onPartitionsRevoked(partitions: Collection<TopicPartition>) {
+            revokeCallback(consumer, partitions)
+        }
     }
 }
