@@ -39,12 +39,14 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
         Runtime.getRuntime().addShutdownHook(Thread { stop() })
     }
 
-    fun register(messageListener: MessageListener) {
+    fun register(messageListener: MessageListener): RapidsCliApplication {
         listeners.add(messageListener)
+        return this
     }
 
-    fun unregister(messageListener: MessageListener) {
+    fun unregister(messageListener: MessageListener): RapidsCliApplication {
         listeners.remove(messageListener)
+        return this
     }
 
     fun stop() {
@@ -54,16 +56,19 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
         shutdown.await(10, TimeUnit.SECONDS)
     }
 
-    fun partitionsAssignedFirstTime(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit) {
+    fun partitionsAssignedFirstTime(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit): RapidsCliApplication {
         partitionsAssignedFirstTime = callback
+        return this
     }
 
-    fun partitionsAssigned(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit) {
+    fun partitionsAssigned(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit): RapidsCliApplication {
         partitionsAssigned = callback
+        return this
     }
 
-    fun partitionsARevoked(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit) {
+    fun partitionsARevoked(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit): RapidsCliApplication {
         partitionsRevoked = callback
+        return this
     }
 
     fun start(groupId: String, topics: List<String>, properties: Properties = Properties(), configure: (KafkaConsumer<String, String>) -> Unit = {}) {
@@ -94,7 +99,7 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
         catch (err: Exception) { log.warn(message, err)}
     }
 
-    private inner class RebalanceListener(
+    private class RebalanceListener(
         private val consumer: KafkaConsumer<String, String>,
         private val partitionsAssignedFirstTime: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit,
         private val assignCallback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit,
