@@ -61,9 +61,11 @@ class JsonRiver(rapids: RapidsCliApplication) : MessageListener {
     private fun hasErrors(record: ConsumerRecord<String, String>, node: JsonNode, errors: MutableList<String>): Boolean {
         return validations.filterNot {
             val reasons = mutableListOf<String>()
-            it.validate(record, node, reasons).also {
-                if (reasons.isEmpty()) errors.add("Unknown reason")
-                else errors.addAll(reasons)
+            it.validate(record, node, reasons).also { validated ->
+                if (!validated) {
+                    if (reasons.isEmpty()) errors.add("Unknown reason")
+                    else errors.addAll(reasons)
+                }
             }
         }.isNotEmpty()
     }
