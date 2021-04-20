@@ -4,6 +4,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.lang.RuntimeException
 import java.util.*
 
 internal class JsonRiverTest {
@@ -51,5 +52,31 @@ internal class JsonRiverTest {
         assertFalse(validated)
         assertNotNull(errors)
         assertEquals(1, errors!!.size)
+    }
+
+    @Test
+    fun `stopper validering ved exception`() {
+        val validations = mutableListOf<String>()
+        var errorCalled = false
+        river.validate { _, _, _ -> throw RuntimeException("Failed requirement") }
+        river.validate { _, _, _ -> false.also { validations.add("Validation 2") } }
+        river.onError { _, _, reasons -> errorCalled = true }
+        river.onMessage(ConsumerRecord("topic", 1, 1, "key", "{}"))
+
+        assertTrue(validations.isEmpty())
+        assertFalse(errorCalled)
+    }
+
+    @Test
+    fun `stopper validering dersom forutsetning ikke er møtt`() {
+        val validations = mutableListOf<String>()
+        var errorCalled = false
+        river.prerequisite { _, _, _ -> false.also { validations.add("Validation 1") } }
+        river.validate { _, _, _ -> false.also { validations.add("Validation 2") } }
+        river.onError { _, _, reasons -> errorCalled = true }
+        river.onMessage(ConsumerRecord("topic", 1, 1, "key", "{}"))
+
+        assertEquals("Validation 1", validations.joinToString())
+        assertFalse(errorCalled)
     }
 }
