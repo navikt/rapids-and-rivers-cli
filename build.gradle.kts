@@ -6,7 +6,7 @@ group = "com.github.navikt"
 version = properties["version"] ?: "local-build"
 
 plugins {
-    kotlin("jvm") version "1.6.0"
+    kotlin("jvm") version "1.6.10"
     id("java")
     id("maven-publish")
 }
@@ -40,10 +40,10 @@ dependencies {
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "16"
+        kotlinOptions.jvmTarget = "17"
     }
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "16"
+        kotlinOptions.jvmTarget = "17"
     }
 
     withType<Test> {
@@ -54,7 +54,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "7.2"
+        gradleVersion = "7.3.3"
     }
 }
 
