@@ -22,5 +22,5 @@ class ConsumerProducerFactory(private val config: Config) {
             })
         }
 
-    fun adminClient(properties: Properties = Properties()) = AdminClient.create(properties)
+    fun adminClient(properties: Properties = Properties()) = AdminClient.create(config.adminConfig(properties))
 }
