@@ -49,7 +49,8 @@ class OnPremConfig(
         put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
     }
 
-    override fun adminConfig(properties: Properties) = Properties(kafkaBaseConfig()).apply {
+    override fun adminConfig(properties: Properties) = Properties().apply {
+        putAll(kafkaBaseConfig())
         putAll(properties)
     }
 
