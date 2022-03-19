@@ -1,6 +1,6 @@
 val junitJupiterVersion = "5.8.2"
 val jacksonVersion = "2.13.0"
-val kafkaVersion = "2.8.0"
+val kafkaVersion = "3.1.0"
 
 group = "com.github.navikt"
 version = properties["version"] ?: "local-build"
