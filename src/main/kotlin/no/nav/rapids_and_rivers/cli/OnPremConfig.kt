@@ -49,6 +49,10 @@ class OnPremConfig(
         put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
     }
 
+    override fun adminConfig(properties: Properties) = Properties(kafkaBaseConfig()).apply {
+        putAll(properties)
+    }
+
     private fun kafkaBaseConfig() = Properties().apply {
         put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers.joinToString())
         put(SaslConfigs.SASL_MECHANISM, "PLAIN")

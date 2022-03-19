@@ -1,5 +1,6 @@
 package no.nav.rapids_and_rivers.cli
 
+import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -20,4 +21,6 @@ class ConsumerProducerFactory(private val config: Config) {
                 it.close()
             })
         }
+
+    fun adminClient(properties: Properties = Properties()) = AdminClient.create(properties)
 }

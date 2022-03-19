@@ -12,6 +12,7 @@ internal class JsonRiverTest {
     private val testConfig = object : Config {
         override fun producerConfig(properties: Properties) = properties
         override fun consumerConfig(groupId: String, properties: Properties) = properties
+        override fun adminConfig(properties: Properties) = properties
     }
 
     private lateinit var cli: RapidsCliApplication

@@ -48,6 +48,10 @@ class AivenConfig(
         put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
     }
 
+    override fun adminConfig(properties: Properties) = Properties(kafkaBaseConfig()).apply {
+        putAll(properties)
+    }
+
     private fun kafkaBaseConfig() = Properties().apply {
         put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
         put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.SSL.name)
