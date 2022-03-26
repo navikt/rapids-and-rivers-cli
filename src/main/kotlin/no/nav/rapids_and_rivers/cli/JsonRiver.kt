@@ -22,38 +22,46 @@ class JsonRiver(rapids: RapidsCliApplication) : MessageListener {
         rapids.register(this)
     }
 
-    fun register(listener: JsonMessageListener) {
+    fun register(listener: JsonMessageListener): JsonRiver {
         onMessage(listener)
         onError(listener)
+        return this
     }
 
-    fun prerequisite(validation: JsonValidation) {
+    fun prerequisite(validation: JsonValidation): JsonRiver {
         validations.add(PrerequisiteValidation(validation))
+        return this
     }
 
-    fun validate(validation: JsonValidation) {
+    fun validate(validation: JsonValidation): JsonRiver {
         validations.add(validation)
+        return this
     }
 
-    fun onMessage(listener: JsonValidationSuccessListener) {
+    fun onMessage(listener: JsonValidationSuccessListener): JsonRiver {
         listeners.add(listener)
+        return this
     }
 
-    fun onError(listener: JsonValidationErrorListener) {
+    fun onError(listener: JsonValidationErrorListener): JsonRiver {
         errorListeners.add(listener)
+        return this
     }
 
-    fun unregister(listener: JsonMessageListener) {
+    fun unregister(listener: JsonMessageListener): JsonRiver {
         unregister(listener as JsonValidationSuccessListener)
         unregister(listener as JsonValidationErrorListener)
+        return this
     }
 
-    fun unregister(listener: JsonValidationSuccessListener) {
+    fun unregister(listener: JsonValidationSuccessListener): JsonRiver {
         listeners.remove(listener)
+        return this
     }
 
-    fun unregister(listener: JsonValidationErrorListener) {
+    fun unregister(listener: JsonValidationErrorListener): JsonRiver {
         errorListeners.remove(listener)
+        return this
     }
 
     override fun onMessage(record: ConsumerRecord<String, String>) {
