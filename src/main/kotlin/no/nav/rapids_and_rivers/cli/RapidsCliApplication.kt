@@ -26,11 +26,15 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
     private var partitionsAssignedFirstTime: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit = { _, _ -> }
     private var partitionsAssigned: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit = { _, _ -> }
     private var partitionsRevoked: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit = { _, _ -> }
+    private var onShutdown: (KafkaConsumer<String, String>) -> Unit = { consumer ->
+        if (commitOffsetsOnShutdown) tryAndLog("failed to commit offsets") { consumer.commitSync(Duration.ofSeconds(1)) }
+    }
 
     private val defaultConsumerProperties = Properties().apply {
         this[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
     }
     private lateinit var consumer: KafkaConsumer<String, String>
+    private var commitOffsetsOnShutdown = false
 
     init {
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
@@ -46,6 +50,11 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
 
     fun unregister(messageListener: MessageListener): RapidsCliApplication {
         listeners.remove(messageListener)
+        return this
+    }
+
+    fun commitOffsetsOnShutdown(answer: Boolean): RapidsCliApplication {
+        this.commitOffsetsOnShutdown = answer
         return this
     }
 
@@ -66,8 +75,13 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
         return this
     }
 
-    fun partitionsARevoked(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit): RapidsCliApplication {
+    fun partitionsRevoked(callback: (KafkaConsumer<String, String>, Collection<TopicPartition>) -> Unit): RapidsCliApplication {
         partitionsRevoked = callback
+        return this
+    }
+
+    fun onShutdown(callback: (KafkaConsumer<String, String>) -> Unit): RapidsCliApplication {
+        onShutdown = callback
         return this
     }
 
@@ -87,7 +101,7 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
                 } catch (err: WakeupException) {
                     log.info("Exiting consumer after ${if (!running.get()) "receiving shutdown signal" else "being interrupted by someone" }")
                 }
-                tryAndLog("failed to commit offsets") { consumer.commitSync(Duration.ofSeconds(1)) }
+                onShutdown(consumer)
                 tryAndLog("failed to unsubscribe") { consumer.unsubscribe() }
                 shutdown.countDown()
             }
