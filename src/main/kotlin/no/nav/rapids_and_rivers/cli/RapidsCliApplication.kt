@@ -59,7 +59,7 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
     }
 
     fun stop() {
-        if (!running.getAndSet(false)) return log.error("Already in process of shutting down")
+        if (!running.getAndSet(false)) return log.info("Already in process of shutting down")
         log.info("Received shutdown signal. Waiting 10 seconds for app to shutdown gracefully")
         if (this::consumer.isInitialized) consumer.wakeup()
         shutdown.await(10, TimeUnit.SECONDS)
