@@ -95,8 +95,10 @@ class RapidsCliApplication(private val factory: ConsumerProducerFactory) {
                 try {
                     while (running.get())
                         consumer.poll(Duration.ofSeconds(1)).forEach { record ->
-                            try { listeners.onEach { it.onMessage(record) } }
-                            catch (err: Exception) { /* ignore listener error */ }
+                            listeners.forEach { listener ->
+                                try { listener.onMessage(record) }
+                                catch (err: Exception) { /* ignore listener error */ }
+                            }
                         }
                 } catch (err: WakeupException) {
                     log.info("Exiting consumer after ${if (!running.get()) "receiving shutdown signal" else "being interrupted by someone" }")
