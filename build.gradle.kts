@@ -1,12 +1,12 @@
-val junitJupiterVersion = "5.8.2"
-val jacksonVersion = "2.13.0"
-val kafkaVersion = "3.1.0"
+val junitJupiterVersion = "5.10.1"
+val jacksonVersion = "2.16.1"
+val kafkaVersion = "3.6.1"
 
 group = "com.github.navikt"
 version = properties["version"] ?: "local-build"
 
 plugins {
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "1.9.22"
     id("java")
     id("maven-publish")
 }
@@ -25,8 +25,8 @@ repositories {
 dependencies {
     api("org.apache.kafka:kafka-clients:$kafkaVersion")
 
-    api("ch.qos.logback:logback-classic:1.3.0-alpha10")
-    api("net.logstash.logback:logstash-logback-encoder:7.0") {
+    api("ch.qos.logback:logback-classic:1.4.14")
+    api("net.logstash.logback:logstash-logback-encoder:7.4") {
         exclude("com.fasterxml.jackson.core")
     }
 
@@ -40,10 +40,10 @@ dependencies {
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "17"
+        kotlinOptions.jvmTarget = "21"
     }
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "17"
+        kotlinOptions.jvmTarget = "21"
     }
 
     withType<Test> {
@@ -54,12 +54,12 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "7.3.3"
+        gradleVersion = "8.5"
     }
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
-    classifier = "sources"
+    archiveClassifier = "sources"
     from(sourceSets.main.get().allSource)
 }
 
