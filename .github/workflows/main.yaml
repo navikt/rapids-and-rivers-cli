@@ -7,6 +7,8 @@ on:
 
 jobs:
     build:
+        permissions:
+            packages: write
         runs-on: ubuntu-latest
         steps:
             -   uses: actions/checkout@v2
@@ -24,6 +26,8 @@ jobs:
     release:
         name: Create Release
         needs: build
+        permissions:
+            contents: write
         runs-on: ubuntu-latest
         if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'ci skip')
         steps:
