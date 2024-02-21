@@ -1,4 +1,4 @@
-val junitJupiterVersion = "5.10.1"
+val junitJupiterVersion = "5.10.2"
 val jacksonVersion = "2.16.1"
 val kafkaVersion = "3.6.1"
 
