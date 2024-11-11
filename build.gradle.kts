@@ -52,10 +52,6 @@ tasks {
             events("passed", "skipped", "failed")
         }
     }
-
-    withType<Wrapper> {
-        gradleVersion = "8.5"
-    }
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
