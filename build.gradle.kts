@@ -1,6 +1,6 @@
 val junitJupiterVersion = "5.11.3"
-val jacksonVersion = "2.16.1"
-val kafkaVersion = "3.6.1"
+val jacksonVersion = "2.18.1"
+val kafkaVersion = "3.9.0"
 
 group = "com.github.navikt"
 version = properties["version"] ?: "local-build"
@@ -25,8 +25,8 @@ repositories {
 dependencies {
     api("org.apache.kafka:kafka-clients:$kafkaVersion")
 
-    api("ch.qos.logback:logback-classic:1.4.14")
-    api("net.logstash.logback:logstash-logback-encoder:7.4") {
+    api("ch.qos.logback:logback-classic:1.5.12")
+    api("net.logstash.logback:logstash-logback-encoder:8.0") {
         exclude("com.fasterxml.jackson.core")
     }
 
