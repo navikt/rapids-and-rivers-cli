@@ -1,6 +1,8 @@
 val junitJupiterVersion = "5.11.3"
 val jacksonVersion = "2.18.1"
 val kafkaVersion = "3.9.0"
+val logbackClassicVersion = "1.5.12"
+val logbackEncoderVersion = "8.0"
 
 group = "com.github.navikt"
 version = properties["version"] ?: "local-build"
@@ -11,22 +13,15 @@ plugins {
     id("maven-publish")
 }
 
-buildscript {
-    dependencies {
-        classpath("org.junit.platform:junit-platform-gradle-plugin:1.2.0")
-    }
-}
-
 repositories {
     mavenCentral()
-    maven("https://jitpack.io")
 }
 
 dependencies {
     api("org.apache.kafka:kafka-clients:$kafkaVersion")
 
-    api("ch.qos.logback:logback-classic:1.5.12")
-    api("net.logstash.logback:logstash-logback-encoder:8.0") {
+    api("ch.qos.logback:logback-classic:$logbackClassicVersion")
+    api("net.logstash.logback:logstash-logback-encoder:$logbackEncoderVersion") {
         exclude("com.fasterxml.jackson.core")
     }
 
