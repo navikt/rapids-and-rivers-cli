@@ -8,7 +8,7 @@ group = "com.github.navikt"
 version = properties["version"] ?: "local-build"
 
 plugins {
-    kotlin("jvm") version "2.2.10"
+    kotlin("jvm") version "2.2.21"
     id("java")
     id("maven-publish")
 }
